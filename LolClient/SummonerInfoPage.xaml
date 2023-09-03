@@ -35,53 +35,6 @@
                 CharacterSpacing="2"
                 HorizontalAlignment="Center"
                 FontSize="24"></TextBlock>
-            
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="100"></ColumnDefinition>
-                    <ColumnDefinition Width="100"></ColumnDefinition>
-                    <ColumnDefinition Width="100"></ColumnDefinition>
-                    <ColumnDefinition Width="Auto"></ColumnDefinition>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                </Grid.RowDefinitions>
-                <StackPanel
-                    Grid.Column="0"
-                    Orientation="Vertical">
-                    <TextBlock 
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        x:Name="BestChampionName" 
-                        FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
-                        FontSize="18"
-                    ></TextBlock>
-                    <Image
-                        Margin="10"
-                        x:Name="BestChampionIcon"></Image>
-                </StackPanel>
-                <TextBlock 
-                    Grid.Column="1"
-                    VerticalAlignment="Center"
-                    x:Name="BestChampionWins" 
-                    FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
-                    FontSize="18"
-                    ></TextBlock>
-                <TextBlock 
-                    Grid.Column="2"
-                    VerticalAlignment="Center"
-                    x:Name="BestChampionLosses" 
-                    FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
-                    FontSize="18"
-                    ></TextBlock>
-                <TextBlock 
-                    Grid.Column="3"
-                    VerticalAlignment="Center"
-                    x:Name="BestChampionGames" 
-                    FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
-                    FontSize="18"
-                    ></TextBlock>
-            </Grid>
         </StackPanel>
     </StackPanel>
 </Page>

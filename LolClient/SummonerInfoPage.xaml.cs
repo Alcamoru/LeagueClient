@@ -103,13 +103,12 @@ namespace LolClient
 
                 foreach (KeyValuePair<string,List<Match>> keyValuePair in topChampsListSorted)
                 {
-                    Grid grid = new Grid();
-                    grid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(100, GridUnitType.Pixel)});
-                    grid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(100, GridUnitType.Pixel)});
-                    grid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(100, GridUnitType.Pixel)});
-                    grid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(0, GridUnitType.Auto)});
+                    Grid champGrid = new Grid();
+                    champGrid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(0, GridUnitType.Auto)});
+                    champGrid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(0, GridUnitType.Auto)});
+                    champGrid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(0, GridUnitType.Auto)});
                     
-                    grid.RowDefinitions.Add(new RowDefinition() {Height = new GridLength(0, GridUnitType.Auto)});
+                    champGrid.RowDefinitions.Add(new RowDefinition() {Height = new GridLength(0, GridUnitType.Auto)});
 
 
                     TextBlock champName = new TextBlock()
@@ -131,51 +130,54 @@ namespace LolClient
                             {
                                 Source = new BitmapImage(new Uri($"http://ddragon.leagueoflegends.com/cdn/13.17.1/" +
                                                                  $"img/champion/{participant.ChampionName}.png",
-                                    UriKind.Absolute))
+                                    UriKind.Absolute)),
+                                Width = 50
                             };
                         }
                     }
 
-                    int nWins = 0;
-                    int nLoses = 0;
+                    double killRatio = 0;
+                    double deathRatio = 0;
+                    double assistRatio = 0;
+                    double winRate = 0;
                     int nGames = keyValuePair.Value.Count();
                     
                     foreach (Match match in keyValuePair.Value)
                     {
                         foreach (Participant participant in match.Info.Participants)
                         {
-                            if (participant.SummonerName == summoner.Name)  
+                            if (participant.SummonerName == summoner.Name)
                             {
+                                killRatio += participant.Kills;
+                                deathRatio += participant.Deaths;
+                                assistRatio += participant.Assists;
                                 if (participant.Win)
                                 {
-                                    nWins += 1;
-                                }
-                                else
-                                {
-                                    nLoses += 1;
+                                    winRate += 1;
                                 }
                             }
                         }
                     }
+
+                    killRatio = Math.Round(killRatio / nGames, 2);
+                    deathRatio = Math.Round(deathRatio / nGames, 2);
+                    assistRatio = Math.Round(assistRatio / nGames, 2);
+                    winRate = Math.Round(winRate / nGames * 100);
+
+                    double kda = Math.Round((killRatio + assistRatio) / deathRatio);
                     
-                    TextBlock champWins = new TextBlock()
+                    TextBlock winRateLabel = new TextBlock()
                     {
+                        HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Center,
-                        Text = $"{nWins} Victoires",
+                        Text = $"{winRate} %",
                         FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
                         FontSize=18
                     };
                     
-                    TextBlock champLoses= new TextBlock()
+                    TextBlock gamesPlayedLabel = new TextBlock()
                     {
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Text = $"{nLoses} Défaites",
-                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
-                        FontSize=18
-                    };
-                    
-                    TextBlock champGames = new TextBlock()
-                    {
+                        HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Center,
                         Text = $"{nGames} Parties jouées",
                         FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
@@ -183,22 +185,53 @@ namespace LolClient
                     };
                     
                     
+                    TextBlock kdaLabel = new TextBlock()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Text = $"{kda} KDA",
+                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                        FontSize=18
+                    };
+                    
+                    TextBlock killDeathsAssistsLabel = new TextBlock()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Text = $"{killRatio}/{deathRatio}/{assistRatio}",
+                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                        FontSize=18
+                    };
+                    
+                    
                     StackPanel stackPanelChamp = new StackPanel();
                     stackPanelChamp.Margin = new Thickness(10);
-                    stackPanelChamp.Orientation = Orientation.Vertical;
+                    stackPanelChamp.Orientation = Orientation.Horizontal;
                     
-                    stackPanelChamp.Children.Add(champName);
                     stackPanelChamp.Children.Add(champIcon);
+                    stackPanelChamp.Children.Add(champName);
+
+                    StackPanel stackPanelKda = new StackPanel();
+                    stackPanelKda.Margin = new Thickness(10);
+                    stackPanelKda.Orientation = Orientation.Vertical;
+                    
+                    stackPanelKda.Children.Add(kdaLabel);
+                    stackPanelKda.Children.Add(killDeathsAssistsLabel);
+
+                    StackPanel stackPanelGames = new StackPanel();
+                    stackPanelGames.Margin = new Thickness(10);
+                    stackPanelGames.Orientation = Orientation.Vertical;
+                    
+                    stackPanelGames.Children.Add(winRateLabel);
+                    stackPanelGames.Children.Add(gamesPlayedLabel);
                     
                     Grid.SetColumn(stackPanelChamp, 0);
-                    grid.Children.Add(stackPanelChamp);
-                    Grid.SetColumn(champWins, 1);
-                    grid.Children.Add(champWins);
-                    Grid.SetColumn(champLoses, 2);
-                    grid.Children.Add(champLoses);
-                    Grid.SetColumn(champGames, 3);
-                    grid.Children.Add(champGames);
-                    BestChamps.Children.Add(grid);
+                    champGrid.Children.Add(stackPanelChamp);
+                    Grid.SetColumn(stackPanelKda, 1);
+                    champGrid.Children.Add(stackPanelKda);
+                    Grid.SetColumn(stackPanelGames, 2);
+                    champGrid.Children.Add(stackPanelGames);
+                    BestChamps.Children.Add(champGrid);
                 }
                 
             }
