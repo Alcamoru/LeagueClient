@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "LolClient (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "LolClient (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
