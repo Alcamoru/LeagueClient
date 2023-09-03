@@ -1,4 +1,5 @@
-﻿### DotnetCore template
+﻿RIOT_TOKEN.txt
+### DotnetCore template
 # .NET Core build folders
 bin/
 obj/

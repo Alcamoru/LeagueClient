@@ -27,8 +27,12 @@ namespace LolClient
 
         public HomePage()
         {
+            var streamReader =
+                new StreamReader(
+                    @"C:\Users\alcam\OneDrive\Documents\Developpement\win-projects\LolClient\LolClient\RIOT_TOKEN.txt");
+            var token = streamReader.ReadLine();
             this.InitializeComponent();
-            RiotApi = RiotGamesApi.NewInstance("RGAPI-313bab44-949d-4f35-b747-d7d722fac5e9");
+            RiotApi = RiotGamesApi.NewInstance(token!);
         }
 
         private RiotGamesApi RiotApi { get; set; }
