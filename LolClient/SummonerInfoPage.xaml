@@ -25,9 +25,10 @@
         </TextBlock>
         <StackPanel 
             Orientation="Vertical" 
-            HorizontalAlignment="Left">
+            HorizontalAlignment="Left"
+            x:Name="BestChamps">
             <TextBlock 
-                Margin="0 0 0 50"
+                Margin="0 0 0 25"
                 Text="Meilleurs champions" 
                 FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
                 FontWeight="Bold"

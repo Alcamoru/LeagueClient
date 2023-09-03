@@ -78,48 +78,129 @@ namespace LolClient
 
                 SummonerNameTextBlock.Text = "Statistiques de " + summoner!.Name;
                 
-                string[] matchIdsByPuuid = RiotGamesApi.MatchV5().GetMatchIdsByPUUID(RegionalRoute.EUROPE, summoner.Puuid, count: 10);
+                string[] matchIdsByPuuid = RiotGamesApi.MatchV5().GetMatchIdsByPUUID(RegionalRoute.EUROPE, summoner.Puuid, count: 30);
                 
                 Dictionary<string, List<Match>> topChamps = BestChampions(matchIdsByPuuid, summoner.Name);
-                Dictionary<string, List<Match>> bestChamp = null;
-                int maxGames = 0;
-                foreach (KeyValuePair<string,List<Match>> keyValuePair in topChamps)
+                List<KeyValuePair<string, List<Match>>> champs = topChamps.ToList();
+                List<KeyValuePair<string, List<Match>>> topChampsListSorted =
+                    new List<KeyValuePair<string, List<Match>>>();
+
+                foreach (int i in Enumerable.Range(0, 3))  
                 {
-                    if (keyValuePair.Value.Count > maxGames)
+                    int j = 1;
+                    foreach (KeyValuePair<string,List<Match>> keyValuePair in champs)
                     {
-                        maxGames = keyValuePair.Value.Count;
-                        bestChamp = new Dictionary<string, List<Match>>() {{keyValuePair.Key, keyValuePair.Value}};
+                        if (keyValuePair.Value.Count > j)
+                        {
+                            j = keyValuePair.Value.Count();
+                            topChampsListSorted.Add(keyValuePair);
+                        }
                     }
+                    champs.Remove(topChampsListSorted.Last());
                 }
 
-                BestChampionName.Text = bestChamp!.ToList()[0].Key;
-                List<Match> champMatches = bestChamp.ToList()[0].Value;
-                int nWins = 0;
-                int nLosses = 0;
-                int nMatches = champMatches.Count;
-                foreach (Match champMatch in champMatches)
+                topChampsListSorted = topChampsListSorted.Take(3).ToList();
+
+                foreach (KeyValuePair<string,List<Match>> keyValuePair in topChampsListSorted)
                 {
-                    foreach (Participant participant in champMatch.Info.Participants)
+                    Grid grid = new Grid();
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(100, GridUnitType.Pixel)});
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(100, GridUnitType.Pixel)});
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(100, GridUnitType.Pixel)});
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(0, GridUnitType.Auto)});
+                    
+                    grid.RowDefinitions.Add(new RowDefinition() {Height = new GridLength(0, GridUnitType.Auto)});
+
+
+                    TextBlock champName = new TextBlock()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Text = $"{keyValuePair.Key}",
+                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                        FontSize=18
+                    };
+
+                    Image champIcon = null;
+
+                    foreach (Participant participant in keyValuePair.Value[0].Info.Participants)
                     {
                         if (participant.SummonerName == summoner.Name)
                         {
-                            if (participant.Win)
+                            champIcon = new Image()
                             {
-                                nWins += 1;
-                            }
-                            else
+                                Source = new BitmapImage(new Uri($"http://ddragon.leagueoflegends.com/cdn/13.17.1/" +
+                                                                 $"img/champion/{participant.ChampionName}.png",
+                                    UriKind.Absolute))
+                            };
+                        }
+                    }
+
+                    int nWins = 0;
+                    int nLoses = 0;
+                    int nGames = keyValuePair.Value.Count();
+                    
+                    foreach (Match match in keyValuePair.Value)
+                    {
+                        foreach (Participant participant in match.Info.Participants)
+                        {
+                            if (participant.SummonerName == summoner.Name)  
                             {
-                                nLosses += 1;
+                                if (participant.Win)
+                                {
+                                    nWins += 1;
+                                }
+                                else
+                                {
+                                    nLoses += 1;
+                                }
                             }
                         }
                     }
+                    
+                    TextBlock champWins = new TextBlock()
+                    {
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Text = $"{nWins} Victoires",
+                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                        FontSize=18
+                    };
+                    
+                    TextBlock champLoses= new TextBlock()
+                    {
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Text = $"{nLoses} Défaites",
+                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                        FontSize=18
+                    };
+                    
+                    TextBlock champGames = new TextBlock()
+                    {
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Text = $"{nGames} Parties jouées",
+                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                        FontSize=18
+                    };
+                    
+                    
+                    StackPanel stackPanelChamp = new StackPanel();
+                    stackPanelChamp.Margin = new Thickness(10);
+                    stackPanelChamp.Orientation = Orientation.Vertical;
+                    
+                    stackPanelChamp.Children.Add(champName);
+                    stackPanelChamp.Children.Add(champIcon);
+                    
+                    Grid.SetColumn(stackPanelChamp, 0);
+                    grid.Children.Add(stackPanelChamp);
+                    Grid.SetColumn(champWins, 1);
+                    grid.Children.Add(champWins);
+                    Grid.SetColumn(champLoses, 2);
+                    grid.Children.Add(champLoses);
+                    Grid.SetColumn(champGames, 3);
+                    grid.Children.Add(champGames);
+                    BestChamps.Children.Add(grid);
                 }
-                BestChampionIcon.Source =
-                    new BitmapImage(
-                        new Uri($"http://ddragon.leagueoflegends.com/cdn/13.17.1/img/champion/{BestChampionName.Text}.png", UriKind.Absolute));
-                BestChampionWins.Text = nWins + " Victoires";
-                BestChampionLosses.Text = nLosses + " Défaites";
-                BestChampionGames.Text = nMatches + " Parties jouées";
+                
             }
             
             base.OnNavigatedTo(e);
