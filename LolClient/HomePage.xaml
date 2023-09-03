@@ -1,40 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <Page
     x:Class="LolClient.HomePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:LolClient"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="#0A3D62">
-    
+
     <StackPanel Orientation="Vertical">
-        <TextBlock Text="League Client" 
+        <TextBlock Text="League Client"
                    FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
                    FontSize="56"
                    HorizontalAlignment="Center"
                    FontWeight="Bold"
-                   Margin="0, 20, 0, 0">
-            
-        </TextBlock>
-        <TextBlock Text="Nom d'invocateur" 
+                   Margin="0, 20, 0, 0" />
+        <TextBlock Text="Nom d'invocateur"
                    FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
                    FontSize="24"
                    HorizontalAlignment="Center"
                    FontWeight="Bold"
-                   Margin="0, 200, 0, 0">
-            
-        </TextBlock>
-        <TextBox 
+                   Margin="0, 200, 0, 0" />
+        <TextBox
             x:Name="SummonerNameEntry"
             Margin="10"
             Width="300"
-            PlaceholderForeground="White" PlaceholderText="Nom d'invocateur"></TextBox>
-        <Button 
+            PlaceholderForeground="White" PlaceholderText="Nom d'invocateur" />
+        <Button
             Margin="10"
             HorizontalAlignment="Center"
             Width="300"
-            Click="SendSummonerName_OnClick">Voir</Button>
+            Click="SendSummonerName_OnClick">
+            Voir
+        </Button>
     </StackPanel>
 </Page>

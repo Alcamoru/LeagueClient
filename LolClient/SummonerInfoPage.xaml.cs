@@ -1,247 +1,304 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Camille.Enums;
 using Camille.RiotGames;
 using Camille.RiotGames.MatchV5;
 using Camille.RiotGames.SummonerV4;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Navigation;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace LolClient
+namespace LolClient;
+
+/// <summary>
+///     An empty page that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class SummonerInfoPage : Page
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class SummonerInfoPage : Page
+    public SummonerInfoPage()
     {
-        public SummonerInfoPage()
-        {
-            this.InitializeComponent();
-        }
-        
-        private RiotGamesApi RiotGamesApi { get; set; }
-        
-        private Dictionary<string, List<Match>> BestChampions(string[] matchIds, string summonerName)  
-        {
-            Dictionary<string, List<Match>> champs = new Dictionary<string, List<Match>>();
-            foreach (string matchId in matchIds)
+        InitializeComponent();
+        matchList = null;
+    }
+
+    public List<Match> matchList { get; set; }
+
+    private RiotGamesApi RiotGamesApi { get; set; }
+
+    private List<Match> GetMatchList(string[] matchIds)
+    {
+        var matches = new List<Match>();
+        foreach (var matchId in matchIds) matches.Add(RiotGamesApi.MatchV5().GetMatch(RegionalRoute.EUROPE, matchId));
+
+        return matches;
+    }
+
+    private Dictionary<string, List<Match>> BestChampions(List<Match> matchList, string summonerName)
+    {
+        var champs = new Dictionary<string, List<Match>>();
+        foreach (var match in matchList)
+        foreach (var participant in match!.Info.Participants)
+            if (participant.SummonerName == summonerName)
             {
-                Match match = RiotGamesApi.MatchV5().GetMatch(RegionalRoute.EUROPE, matchId);
-
-                foreach (Participant participant in match!.Info.Participants)
-                {
-                    if (participant.SummonerName == summonerName)
-                    {
-                        if (!champs.Keys.Contains(participant.ChampionName))
-                        {
-                            champs.Add(participant.ChampionName, new List<Match>(){match});
-                        }
-                        else
-                        {
-                            champs[participant.ChampionName].Add(match);
-                        }
-                        
-                    }
-                }
+                if (!champs.Keys.Contains(participant.ChampionName))
+                    champs.Add(participant.ChampionName, new List<Match> { match });
+                else
+                    champs[participant.ChampionName].Add(match);
             }
-            return champs;
-        }   
-        
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        return champs;
+    }
+
+
+    private void DisplayTitle(Summoner summoner)
+    {
+        SummonerNameTextBlock.Text = "Statistiques de " + summoner!.Name;
+    }
+
+    private void DisplayBestChampions(RiotGamesApi api, Summoner summoner)
+    {
+        var matchIdsByPuuid = api.MatchV5().GetMatchIdsByPUUID(RegionalRoute.EUROPE, summoner.Puuid, 30);
+        matchList = GetMatchList(matchIdsByPuuid);
+        var topChamps = BestChampions(matchList, summoner.Name);
+        var champs = topChamps.ToList();
+        var topChampsListSorted =
+            new List<KeyValuePair<string, List<Match>>>();
+
+        foreach (var i in Enumerable.Range(0, 3))
         {
-            
-            if (e.Parameter != null && e.Parameter is List<Object>)
+            var j = 1;
+            foreach (var keyValuePair in champs)
+                if (keyValuePair.Value.Count > j)
+                {
+                    j = keyValuePair.Value.Count();
+                    topChampsListSorted.Add(keyValuePair);
+                }
+
+            champs.Remove(topChampsListSorted.Last());
+        }
+
+        topChampsListSorted = topChampsListSorted.Take(3).ToList();
+
+        foreach (var keyValuePair in topChampsListSorted)
+        {
+            var champGrid = new Grid();
+            champGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            champGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            champGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            champGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(0, GridUnitType.Auto) });
+
+
+            var champName = new TextBlock
             {
-                var parameters = (List<Object>)e.Parameter;
-                
-                
-                RiotGamesApi = (RiotGamesApi)parameters.ElementAt(0);
-                
-                
-                Summoner summoner = RiotGamesApi.SummonerV4().GetBySummonerName(PlatformRoute.EUW1, (string)parameters.ElementAt(1));
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Text = $"{keyValuePair.Key}",
+                FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                FontSize = 18
+            };
 
+            Image champIcon = null;
 
-                SummonerNameTextBlock.Text = "Statistiques de " + summoner!.Name;
-                
-                string[] matchIdsByPuuid = RiotGamesApi.MatchV5().GetMatchIdsByPUUID(RegionalRoute.EUROPE, summoner.Puuid, count: 30);
-                
-                Dictionary<string, List<Match>> topChamps = BestChampions(matchIdsByPuuid, summoner.Name);
-                List<KeyValuePair<string, List<Match>>> champs = topChamps.ToList();
-                List<KeyValuePair<string, List<Match>>> topChampsListSorted =
-                    new List<KeyValuePair<string, List<Match>>>();
-
-                foreach (int i in Enumerable.Range(0, 3))  
-                {
-                    int j = 1;
-                    foreach (KeyValuePair<string,List<Match>> keyValuePair in champs)
+            foreach (var participant in keyValuePair.Value[0].Info.Participants)
+                if (participant.SummonerName == summoner.Name)
+                    champIcon = new Image
                     {
-                        if (keyValuePair.Value.Count > j)
-                        {
-                            j = keyValuePair.Value.Count();
-                            topChampsListSorted.Add(keyValuePair);
-                        }
-                    }
-                    champs.Remove(topChampsListSorted.Last());
+                        Source = new BitmapImage(new Uri($"http://ddragon.leagueoflegends.com/cdn/13.17.1/" +
+                                                         $"img/champion/{participant.ChampionName}.png",
+                            UriKind.Absolute)),
+                        Width = 50
+                    };
+
+            double killRatio = 0;
+            double deathRatio = 0;
+            double assistRatio = 0;
+            double winRate = 0;
+            var nGames = keyValuePair.Value.Count();
+
+            foreach (var match in keyValuePair.Value)
+            foreach (var participant in match.Info.Participants)
+                if (participant.SummonerName == summoner.Name)
+                {
+                    killRatio += participant.Kills;
+                    deathRatio += participant.Deaths;
+                    assistRatio += participant.Assists;
+                    if (participant.Win) winRate += 1;
                 }
 
-                topChampsListSorted = topChampsListSorted.Take(3).ToList();
+            killRatio = Math.Round(killRatio / nGames, 2);
+            deathRatio = Math.Round(deathRatio / nGames, 2);
+            assistRatio = Math.Round(assistRatio / nGames, 2);
+            winRate = Math.Round(winRate / nGames * 100);
 
-                foreach (KeyValuePair<string,List<Match>> keyValuePair in topChampsListSorted)
-                {
-                    Grid champGrid = new Grid();
-                    champGrid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(0, GridUnitType.Auto)});
-                    champGrid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(0, GridUnitType.Auto)});
-                    champGrid.ColumnDefinitions.Add(new ColumnDefinition() {Width = new GridLength(0, GridUnitType.Auto)});
-                    
-                    champGrid.RowDefinitions.Add(new RowDefinition() {Height = new GridLength(0, GridUnitType.Auto)});
+            var kda = Math.Round((killRatio + assistRatio) / deathRatio);
+
+            var winRateLabel = new TextBlock
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Text = $"{winRate} %",
+                FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                FontSize = 18
+            };
+
+            var gamesPlayedLabel = new TextBlock
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Text = $"{nGames} parties",
+                FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                FontSize = 18
+            };
 
 
-                    TextBlock champName = new TextBlock()
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Text = $"{keyValuePair.Key}",
-                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
-                        FontSize=18
-                    };
+            var kdaLabel = new TextBlock
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Text = $"{kda} KDA",
+                FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                FontSize = 18
+            };
 
-                    Image champIcon = null;
+            var killDeathsAssistsLabel = new TextBlock
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Text = $"{killRatio}/{deathRatio}/{assistRatio}",
+                FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                FontSize = 18
+            };
 
-                    foreach (Participant participant in keyValuePair.Value[0].Info.Participants)
-                    {
-                        if (participant.SummonerName == summoner.Name)
-                        {
-                            champIcon = new Image()
-                            {
-                                Source = new BitmapImage(new Uri($"http://ddragon.leagueoflegends.com/cdn/13.17.1/" +
-                                                                 $"img/champion/{participant.ChampionName}.png",
-                                    UriKind.Absolute)),
-                                Width = 50
-                            };
-                        }
-                    }
 
-                    double killRatio = 0;
-                    double deathRatio = 0;
-                    double assistRatio = 0;
-                    double winRate = 0;
-                    int nGames = keyValuePair.Value.Count();
-                    
-                    foreach (Match match in keyValuePair.Value)
-                    {
-                        foreach (Participant participant in match.Info.Participants)
-                        {
-                            if (participant.SummonerName == summoner.Name)
-                            {
-                                killRatio += participant.Kills;
-                                deathRatio += participant.Deaths;
-                                assistRatio += participant.Assists;
-                                if (participant.Win)
-                                {
-                                    winRate += 1;
-                                }
-                            }
-                        }
-                    }
+            var stackPanelChamp = new StackPanel();
+            stackPanelChamp.Margin = new Thickness(10);
+            stackPanelChamp.Orientation = Orientation.Horizontal;
 
-                    killRatio = Math.Round(killRatio / nGames, 2);
-                    deathRatio = Math.Round(deathRatio / nGames, 2);
-                    assistRatio = Math.Round(assistRatio / nGames, 2);
-                    winRate = Math.Round(winRate / nGames * 100);
+            stackPanelChamp.Children.Add(champIcon);
+            stackPanelChamp.Children.Add(champName);
 
-                    double kda = Math.Round((killRatio + assistRatio) / deathRatio);
-                    
-                    TextBlock winRateLabel = new TextBlock()
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Text = $"{winRate} %",
-                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
-                        FontSize=18
-                    };
-                    
-                    TextBlock gamesPlayedLabel = new TextBlock()
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Text = $"{nGames} Parties jouées",
-                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
-                        FontSize=18
-                    };
-                    
-                    
-                    TextBlock kdaLabel = new TextBlock()
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Text = $"{kda} KDA",
-                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
-                        FontSize=18
-                    };
-                    
-                    TextBlock killDeathsAssistsLabel = new TextBlock()
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Text = $"{killRatio}/{deathRatio}/{assistRatio}",
-                        FontFamily=new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
-                        FontSize=18
-                    };
-                    
-                    
-                    StackPanel stackPanelChamp = new StackPanel();
-                    stackPanelChamp.Margin = new Thickness(10);
-                    stackPanelChamp.Orientation = Orientation.Horizontal;
-                    
-                    stackPanelChamp.Children.Add(champIcon);
-                    stackPanelChamp.Children.Add(champName);
+            var stackPanelKda = new StackPanel();
+            stackPanelKda.Margin = new Thickness(10);
+            stackPanelKda.Orientation = Orientation.Vertical;
 
-                    StackPanel stackPanelKda = new StackPanel();
-                    stackPanelKda.Margin = new Thickness(10);
-                    stackPanelKda.Orientation = Orientation.Vertical;
-                    
-                    stackPanelKda.Children.Add(kdaLabel);
-                    stackPanelKda.Children.Add(killDeathsAssistsLabel);
+            stackPanelKda.Children.Add(kdaLabel);
+            stackPanelKda.Children.Add(killDeathsAssistsLabel);
 
-                    StackPanel stackPanelGames = new StackPanel();
-                    stackPanelGames.Margin = new Thickness(10);
-                    stackPanelGames.Orientation = Orientation.Vertical;
-                    
-                    stackPanelGames.Children.Add(winRateLabel);
-                    stackPanelGames.Children.Add(gamesPlayedLabel);
-                    
-                    Grid.SetColumn(stackPanelChamp, 0);
-                    champGrid.Children.Add(stackPanelChamp);
-                    Grid.SetColumn(stackPanelKda, 1);
-                    champGrid.Children.Add(stackPanelKda);
-                    Grid.SetColumn(stackPanelGames, 2);
-                    champGrid.Children.Add(stackPanelGames);
-                    BestChamps.Children.Add(champGrid);
-                }
-                
-            }
-            
-            base.OnNavigatedTo(e);
+            var stackPanelGames = new StackPanel();
+            stackPanelGames.Margin = new Thickness(10);
+            stackPanelGames.Orientation = Orientation.Vertical;
+
+            stackPanelGames.Children.Add(winRateLabel);
+            stackPanelGames.Children.Add(gamesPlayedLabel);
+
+            Grid.SetColumn(stackPanelChamp, 0);
+            champGrid.Children.Add(stackPanelChamp);
+            Grid.SetColumn(stackPanelKda, 1);
+            champGrid.Children.Add(stackPanelKda);
+            Grid.SetColumn(stackPanelGames, 2);
+            champGrid.Children.Add(stackPanelGames);
+            BestChamps.Children.Add(champGrid);
         }
-        
-        private void BackToMainMenu_Click(object sender, RoutedEventArgs e)
+    }
+
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        if (e.Parameter != null && e.Parameter is List<object>)
         {
-            Frame.Navigate(typeof(HomePage));
+            var parameters = (List<object>)e.Parameter;
+
+
+            RiotGamesApi = (RiotGamesApi)parameters.ElementAt(0);
+
+
+            var summoner = RiotGamesApi.SummonerV4()
+                .GetBySummonerName(PlatformRoute.EUW1, (string)parameters.ElementAt(1));
+
+            DisplayTitle(summoner);
+            DisplayBestChampions(RiotGamesApi, summoner);
+
+            foreach (var match in matchList)
+            {
+                var matchStackPanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(10)
+                };
+
+                foreach (var participant in match.Info.Participants)
+                    if (participant.SummonerName == summoner!.Name)
+                    {
+                        if (participant.Win) matchStackPanel.Background = new SolidColorBrush(Colors.Azure);
+
+                        var champIcon = new Image
+                        {
+                            Source = new BitmapImage(new Uri($"http://ddragon.leagueoflegends.com/cdn/13.17.1/img" +
+                                                             $"/champion/{participant.ChampionName}.png")),
+                            Width = 50
+                        };
+                        var sumsGrid = new Grid();
+
+                        sumsGrid.ColumnDefinitions.Add(new ColumnDefinition
+                            { Width = new GridLength(25, GridUnitType.Pixel) });
+                        sumsGrid.ColumnDefinitions.Add(new ColumnDefinition
+                            { Width = new GridLength(25, GridUnitType.Pixel) });
+                        sumsGrid.RowDefinitions.Add(new RowDefinition
+                            { Height = new GridLength(25, GridUnitType.Pixel) });
+                        sumsGrid.RowDefinitions.Add(new RowDefinition
+                            { Height = new GridLength(25, GridUnitType.Pixel) });
+
+                        Debug.Write(
+                            $"http://ddragon.leagueoflegends.com/cdn/13.17.1/img/spell/{participant.Summoner1Id}.png\"");
+
+                        var firstSummonerIcon = new Image
+                        {
+                            Source = new BitmapImage(new Uri(
+                                $"http://ddragon.leagueoflegends.com/cdn/13.17.1/img/spell/{participant.Summoner1Id}.png")),
+                            Width = 25
+                        };
+
+                        var secondSummonerIcon = new Image
+                        {
+                            Source = new BitmapImage(new Uri(
+                                $"http://ddragon.leagueoflegends.com/cdn/13.17.1/img/spell/{participant.Summoner2Id}.png")),
+                            Width = 25
+                        };
+
+                        // Image firstSummonerRunes = new Image()
+                        // {
+                        //     Source = new BitmapImage(new Uri(
+                        //         $"https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/{participant.}.png")),
+                        //     Width = 25
+                        // };
+                        Grid.SetColumn(firstSummonerIcon, 1);
+                        Grid.SetRow(firstSummonerIcon, 0);
+                        sumsGrid.Children.Add(firstSummonerIcon);
+                        Grid.SetColumn(secondSummonerIcon, 1);
+                        Grid.SetRow(secondSummonerIcon, 1);
+                        sumsGrid.Children.Add(secondSummonerIcon);
+
+                        matchStackPanel.Children.Add(champIcon);
+                        matchStackPanel.Children.Add(sumsGrid);
+                    }
+
+                Historic.Children.Add(matchStackPanel);
+            }
         }
+
+        base.OnNavigatedTo(e);
+    }
+
+    private void BackToMainMenu_Click(object sender, RoutedEventArgs e)
+    {
+        Frame.Navigate(typeof(HomePage));
     }
 }

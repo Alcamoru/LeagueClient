@@ -1,40 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <Page
     x:Class="LolClient.SummonerInfoPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:LolClient"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="#0A3D62">
 
-    <StackPanel>
-        <Button 
-            Margin="20"
-            Click="BackToMainMenu_Click"
-            HorizontalAlignment="Center" 
-            FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel">Retour</Button>
-        <TextBlock 
-            FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
-            FontSize="56"
-            FontWeight="Bold"
-            Margin="20"
-            x:Name="SummonerNameTextBlock" 
-            HorizontalAlignment="Center">
-        </TextBlock>
-        <StackPanel 
-            Orientation="Vertical" 
-            HorizontalAlignment="Left"
-            x:Name="BestChamps">
-            <TextBlock 
-                Margin="0 0 0 25"
-                Text="Meilleurs champions" 
-                FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
-                FontWeight="Bold"
-                CharacterSpacing="2"
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Orientation="Vertical">
+
+            <Button
+                Margin="20"
+                Click="BackToMainMenu_Click"
                 HorizontalAlignment="Center"
-                FontSize="24"></TextBlock>
+                FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel">
+                Retour
+            </Button>
+            <TextBlock
+                FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
+                FontSize="56"
+                FontWeight="Bold"
+                Margin="20"
+                x:Name="SummonerNameTextBlock"
+                HorizontalAlignment="Center" />
+            <Grid Padding="20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="3*" />
+
+                </Grid.ColumnDefinitions>
+
+                <StackPanel
+
+                    Grid.Column="0"
+
+                    Orientation="Vertical"
+                    HorizontalAlignment="Center"
+                    x:Name="BestChamps">
+                    <TextBlock
+                        Margin="0 0 0 25"
+                        Text="Meilleurs champions"
+                        FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
+                        FontWeight="Bold"
+                        CharacterSpacing="2"
+                        HorizontalAlignment="Center"
+                        FontSize="24" />
+                </StackPanel>
+                <StackPanel
+                    Grid.Column="1"
+
+                    Orientation="Vertical"
+                    HorizontalAlignment="Center"
+                    x:Name="Historic">
+                    <TextBlock
+                        Margin="0 0 0 25"
+                        Text="Historique"
+                        FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
+                        FontWeight="Bold"
+                        CharacterSpacing="2"
+                        HorizontalAlignment="Center"
+                        FontSize="24" />
+                </StackPanel>
+
+
+            </Grid>
         </StackPanel>
-    </StackPanel>
+    </ScrollViewer>
+
 </Page>
