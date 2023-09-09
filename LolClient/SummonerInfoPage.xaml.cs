@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Windows.UI.Text;
 using Camille.Enums;
 using Camille.RiotGames;
 using Camille.RiotGames.MatchV5;
 using Camille.RiotGames.SummonerV4;
 using Microsoft.UI;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -233,6 +235,26 @@ public sealed partial class SummonerInfoPage : Page
                     Orientation = Orientation.Horizontal,
                     Margin = new Thickness(10)
                 };
+                
+                TextBlock gameModeTextBlock = new TextBlock()
+                {
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                    FontSize = 18,
+                    FontWeight = FontWeights.Bold,
+                    Margin = new Thickness(10)
+                };
+                
+                if (match.Info.GameMode == GameMode.CLASSIC & match.Info.GameType == GameType.MATCHED_GAME)
+                {
+                    gameModeTextBlock.Text = "Ranked Solo";
+                }
+                else if (match.Info.GameMode == GameMode.ARAM & match.Info.GameType == GameType.MATCHED_GAME)
+                {
+                    gameModeTextBlock.Text = "Aram";
+                }
+                matchStackPanel.Children.Add(gameModeTextBlock);
 
                 foreach (var participant in match.Info.Participants)
                     if (participant.SummonerName == summoner!.Name)
@@ -245,7 +267,11 @@ public sealed partial class SummonerInfoPage : Page
                                                              $"/champion/{participant.ChampionName}.png")),
                             Width = 50
                         };
-                        var sumsGrid = new Grid();
+                        var sumsGrid = new Grid()
+                        {
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Center
+                        };
 
                         sumsGrid.ColumnDefinitions.Add(new ColumnDefinition
                             { Width = new GridLength(25, GridUnitType.Pixel) });
@@ -256,41 +282,213 @@ public sealed partial class SummonerInfoPage : Page
                         sumsGrid.RowDefinitions.Add(new RowDefinition
                             { Height = new GridLength(25, GridUnitType.Pixel) });
 
-                        Debug.Write(
-                            $"http://ddragon.leagueoflegends.com/cdn/13.17.1/img/spell/{participant.Summoner1Id}.png\"");
-
-                        var firstSummonerIcon = new Image
+                        Dictionary<string, string> sumsCorrespondences = new Dictionary<string, string>();
+                        sumsCorrespondences.Add("21", "SummonerBarrier");
+                        sumsCorrespondences.Add("1", "SummonerBoost");
+                        sumsCorrespondences.Add("2202", "SummonerCherryFlash");
+                        sumsCorrespondences.Add("2201", "SummonerCherryHold");
+                        sumsCorrespondences.Add("14", "SummonerDot");
+                        sumsCorrespondences.Add("3", "SummonerExhaust");
+                        sumsCorrespondences.Add("4", "SummonerFlash");
+                        sumsCorrespondences.Add("6", "SummonerHaste");
+                        sumsCorrespondences.Add("7", "SummonerHeal");
+                        sumsCorrespondences.Add("13", "SummonerMana");
+                        sumsCorrespondences.Add("30", "SummonerPoroRecall");
+                        sumsCorrespondences.Add("31", "SummonerPoroThrow");
+                        sumsCorrespondences.Add("11", "SummonerSmite");
+                        sumsCorrespondences.Add("39", "SummonerSnowURFSnowball_Mark");
+                        sumsCorrespondences.Add("32", "SummonerSnowball");
+                        sumsCorrespondences.Add("12", "SummonerTeleport");
+                        sumsCorrespondences.Add("54", "Summoner_UltBookPlaceholder");
+                        sumsCorrespondences.Add("55", "Summoner_UltBookSmitePlaceholder");
+                        
+                        Dictionary<string, List<string>> mainPerksCorrespondences = new Dictionary<string, List<string>>();
+                        mainPerksCorrespondences.Add("8112", new List<string>(){"Domination", "Electrocute"});
+                        mainPerksCorrespondences.Add("8124", new List<string>(){"Domination", "Predator"});
+                        mainPerksCorrespondences.Add("8128", new List<string>(){"Domination", "DarkHarvest"});
+                        mainPerksCorrespondences.Add("9923", new List<string>(){"Domination", "HailOfBlades"});
+                        mainPerksCorrespondences.Add("8351", new List<string>(){"Inspiration", "GlacialAugment"});
+                        mainPerksCorrespondences.Add("8360", new List<string>(){ "Inspiration","UnsealedSpellbook"});
+                        mainPerksCorrespondences.Add("8369", new List<string>(){"Inspiration","FirstStrike"});
+                        mainPerksCorrespondences.Add("8005", new List<string>(){"Precision", "PressTheAttack"});
+                        mainPerksCorrespondences.Add("8008", new List<string>(){"Precision", "LethalTempo"});
+                        mainPerksCorrespondences.Add("8021", new List<string>(){"Precision", "FleetFootwork"});
+                        mainPerksCorrespondences.Add("8010", new List<string>(){"Precision", "Conqueror"});
+                        mainPerksCorrespondences.Add("8437", new List<string>(){"Resolve", "GraspOfTheUndying"});
+                        mainPerksCorrespondences.Add("8439", new List<string>(){"Resolve", "VeteranAftershock"});
+                        mainPerksCorrespondences.Add("8465", new List<string>(){"Resolve", "Guardian"});
+                        mainPerksCorrespondences.Add("8214", new List<string>(){"Sorcery", "SummonAery"});
+                        mainPerksCorrespondences.Add("8229", new List<string>(){"Sorcery" ,"ArcaneComet"});
+                        mainPerksCorrespondences.Add("8230", new List<string>(){"Sorcery", "PhaseRush"});
+                        
+                        Dictionary<string, string> perksCategories = new Dictionary<string, string>();
+                        perksCategories.Add("8100", "perk-images/Styles/7200_Domination.png");
+                        perksCategories.Add("8300", "perk-images/Styles/7203_Whimsy.png");
+                        perksCategories.Add("8000", "perk-images/Styles/7201_Precision.png");
+                        perksCategories.Add("8400", "perk-images/Styles/7204_Resolve.png");
+                        perksCategories.Add("8200", "perk-images/Styles/7202_Sorcery.png");
+                        
+                        Image firstSummonerIcon = new Image
                         {
-                            Source = new BitmapImage(new Uri(
-                                $"http://ddragon.leagueoflegends.com/cdn/13.17.1/img/spell/{participant.Summoner1Id}.png")),
+                            Source = new BitmapImage(new Uri($"http://ddragon.leagueoflegends.com/cdn/13.17.1/img/spell/{sumsCorrespondences[participant.Summoner1Id.ToString()]}.png")),
                             Width = 25
                         };
 
-                        var secondSummonerIcon = new Image
+                        Image secondSummonerIcon = new Image
                         {
                             Source = new BitmapImage(new Uri(
-                                $"http://ddragon.leagueoflegends.com/cdn/13.17.1/img/spell/{participant.Summoner2Id}.png")),
+                                $"http://ddragon.leagueoflegends.com/cdn/13.17.1/img/spell/{sumsCorrespondences[participant.Summoner2Id.ToString()]}.png")),
                             Width = 25
                         };
 
-                        // Image firstSummonerRunes = new Image()
-                        // {
-                        //     Source = new BitmapImage(new Uri(
-                        //         $"https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/{participant.}.png")),
-                        //     Width = 25
-                        // };
-                        Grid.SetColumn(firstSummonerIcon, 1);
+                        string source =
+                            $"https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/{mainPerksCorrespondences[participant.Perks.Styles[0].Selections[0].Perk.ToString()][0]}/{mainPerksCorrespondences[participant.Perks.Styles[0].Selections[0].Perk.ToString()][1]}/{mainPerksCorrespondences[participant.Perks.Styles[0].Selections[0].Perk.ToString()][1]}.png";
+                        
+                        Image firstPerkIcon = new Image()
+                        {
+                            Source = new BitmapImage(new Uri(source)),
+                            Width = 25
+                        };
+
+                        source = $"https://ddragon.leagueoflegends.com/cdn/img/{perksCategories[participant.Perks.Styles[1].Style.ToString()]}";
+
+                        Image secondPerkIcon = new Image()
+                        {
+                            Source = new BitmapImage(new Uri(source)),
+                            Width = 20
+                        };
+                        
+                        Grid.SetColumn(firstSummonerIcon, 0);
                         Grid.SetRow(firstSummonerIcon, 0);
                         sumsGrid.Children.Add(firstSummonerIcon);
-                        Grid.SetColumn(secondSummonerIcon, 1);
+                        Grid.SetColumn(secondSummonerIcon, 0);
                         Grid.SetRow(secondSummonerIcon, 1);
                         sumsGrid.Children.Add(secondSummonerIcon);
+                        Grid.SetColumn(firstPerkIcon, 1);
+                        Grid.SetRow(firstPerkIcon, 0);
+                        sumsGrid.Children.Add(firstPerkIcon);
+                        Grid.SetColumn(secondPerkIcon, 1);
+                        Grid.SetRow(secondPerkIcon, 1);
+                        sumsGrid.Children.Add(secondPerkIcon);
+                        sumsGrid.Background = new SolidColorBrush(Colors.Transparent);
 
                         matchStackPanel.Children.Add(champIcon);
                         matchStackPanel.Children.Add(sumsGrid);
+
+                        if (participant.Win)
+                        {
+                            matchStackPanel.Background = new SolidColorBrush(Colors.Green);
+                        }
+                        else
+                        {
+                            matchStackPanel.Background = new SolidColorBrush(Colors.Red);
+                        }
+
+                        matchStackPanel.Padding = new Thickness(15);
+                        matchStackPanel.CornerRadius = new CornerRadius(15);
+                        
+                        StackPanel statsStackPanel = new StackPanel()
+                        {
+                            Orientation = Orientation.Vertical,
+                            Margin = new Thickness(10)
+                        };
+
+                        string kda = $"{participant.Kills} / {participant.Deaths} / {participant.Assists}";
+                        
+                        TextBlock kdaTextBlock = new TextBlock()
+                        {
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                            FontSize = 18,
+                            Text = kda,
+                            Margin = new Thickness(5)
+                        };
+                        statsStackPanel.Children.Add(kdaTextBlock);
+                        double kdaNumber;
+                        if (participant.Deaths == 0)
+                        {
+                            kdaNumber = (participant.Kills + participant.Assists) / 1;
+                        }
+                        else
+                        {
+                            kdaNumber = (participant.Kills + participant.Assists) / participant.Deaths;
+                        }
+                        kdaNumber = Math.Round(kdaNumber);
+                        TextBlock kdaNumberTextBlock = new TextBlock()
+                        {
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                            FontSize = 14,
+                            Text = kdaNumber + " KDA",
+                            Margin = new Thickness(5)
+                        };
+                        double csMin = participant.TotalMinionsKilled / (participant.Challenges!.GameLength.Value / 60);
+                        csMin = Math.Round(csMin, 2);
+                        
+                        TextBlock csNumberTextBlock = new TextBlock()
+                        {
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
+                            FontSize = 14,
+                            Text = participant.TotalMinionsKilled + $" ({csMin} CS/min)",
+                            Margin = new Thickness(5)
+                        };
+                        
+                        statsStackPanel.Children.Add(kdaNumberTextBlock);
+                        statsStackPanel.Children.Add(csNumberTextBlock);
+                        matchStackPanel.Children.Add(statsStackPanel);
+
+                        Grid itemGrid = new Grid();
+                        itemGrid.ColumnDefinitions.Add(new ColumnDefinition(){Width = new GridLength(25)});
+                        itemGrid.ColumnDefinitions.Add(new ColumnDefinition(){Width = new GridLength(25)});
+                        itemGrid.ColumnDefinitions.Add(new ColumnDefinition(){Width = new GridLength(25)});
+                        itemGrid.ColumnDefinitions.Add(new ColumnDefinition(){Width = new GridLength(25)});
+                        itemGrid.RowDefinitions.Add(new RowDefinition(){Height = new GridLength(25)});
+                        itemGrid.RowDefinitions.Add(new RowDefinition(){Height = new GridLength(25)});
+                        List<int> itemList = new List<int>();
+                        itemList.Add(participant.Item0);
+                        itemList.Add(participant.Item1);
+                        itemList.Add(participant.Item2);
+                        itemList.Add(participant.Item3);
+                        itemList.Add(participant.Item4);
+                        itemList.Add(participant.Item5);
+                        itemList.Add(participant.Item6);
+                        int i = 0;
+                        
+                        foreach (int item in itemList)
+                        {
+                            source = $"https://ddragon.leagueoflegends.com/cdn/13.17.1/img/item/{item}.png";
+                            Debug.WriteLine(source);
+                            Image itemIcon = new Image()
+                            {
+                                Source = new BitmapImage(
+                                    new Uri(source)),
+                                Width = 25
+                            };
+                            
+                            
+                            if (i <= 3)
+                            {
+                                Grid.SetColumn(itemIcon, i);
+                                Grid.SetRow(itemIcon, 0);
+                                itemGrid.Children.Add(itemIcon);
+                            }
+                            else
+                            {
+                                Grid.SetColumn(itemIcon, i - 4);
+                                Grid.SetRow(itemIcon, 1);
+                                itemGrid.Children.Add(itemIcon);
+                            }
+                            i++;
+                        }
+                        matchStackPanel.Children.Add(itemGrid);
                     }
 
                 Historic.Children.Add(matchStackPanel);
+
             }
         }
 
