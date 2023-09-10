@@ -2,15 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Windows.UI.Core;
 using Windows.UI.Text;
 using Camille.Enums;
 using Camille.RiotGames;
 using Camille.RiotGames.MatchV5;
 using Camille.RiotGames.SummonerV4;
 using Microsoft.UI;
+using Microsoft.UI.Input;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
@@ -211,9 +214,11 @@ public sealed partial class SummonerInfoPage : Page
             BestChamps.Children.Add(champGrid);
         }
     }
+    
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
+        base.OnNavigatedTo(e);
         if (e.Parameter != null && e.Parameter is List<object>)
         {
             var parameters = (List<object>)e.Parameter;
@@ -230,11 +235,18 @@ public sealed partial class SummonerInfoPage : Page
 
             foreach (var match in matchList)
             {
-                var matchStackPanel = new StackPanel
+                var matchStackPanel = new Grid()
                 {
-                    Orientation = Orientation.Horizontal,
-                    Margin = new Thickness(10)
+                    Width = 500,
+                    Margin = new Thickness(10),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
                 };
+                matchStackPanel.ColumnDefinitions.Add(new ColumnDefinition());
+                matchStackPanel.ColumnDefinitions.Add(new ColumnDefinition());
+                matchStackPanel.ColumnDefinitions.Add(new ColumnDefinition());
+                matchStackPanel.ColumnDefinitions.Add(new ColumnDefinition());
+                
                 
                 TextBlock gameModeTextBlock = new TextBlock()
                 {
@@ -243,8 +255,9 @@ public sealed partial class SummonerInfoPage : Page
                     FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
                     FontSize = 18,
                     FontWeight = FontWeights.Bold,
-                    Margin = new Thickness(10)
+                    Margin = new Thickness(10),
                 };
+                
                 
                 if (match.Info.GameMode == GameMode.CLASSIC & match.Info.GameType == GameType.MATCHED_GAME)
                 {
@@ -254,6 +267,12 @@ public sealed partial class SummonerInfoPage : Page
                 {
                     gameModeTextBlock.Text = "Aram";
                 }
+                
+                gameModeTextBlock.PointerExited += GameModeTextBlockOnPointerExited;
+                gameModeTextBlock.PointerEntered += GameModeTextBlockOnPointerEntered;
+                gameModeTextBlock.PointerPressed += GameModeTextBlockOnPointerPressed;
+                
+                Grid.SetColumn(gameModeTextBlock, 0);
                 matchStackPanel.Children.Add(gameModeTextBlock);
 
                 foreach (var participant in match.Info.Participants)
@@ -358,6 +377,7 @@ public sealed partial class SummonerInfoPage : Page
                             Width = 20
                         };
                         
+                        
                         Grid.SetColumn(firstSummonerIcon, 0);
                         Grid.SetRow(firstSummonerIcon, 0);
                         sumsGrid.Children.Add(firstSummonerIcon);
@@ -372,8 +392,15 @@ public sealed partial class SummonerInfoPage : Page
                         sumsGrid.Children.Add(secondPerkIcon);
                         sumsGrid.Background = new SolidColorBrush(Colors.Transparent);
 
-                        matchStackPanel.Children.Add(champIcon);
-                        matchStackPanel.Children.Add(sumsGrid);
+                        StackPanel champIconAndSums = new StackPanel()
+                        {
+                            Orientation = Orientation.Horizontal
+                        };
+                        champIconAndSums.Children.Add(champIcon);
+                        champIconAndSums.Children.Add(sumsGrid);
+                        
+                        Grid.SetColumn(champIconAndSums, 1);
+                        matchStackPanel.Children.Add(champIconAndSums);
 
                         if (participant.Win)
                         {
@@ -433,15 +460,20 @@ public sealed partial class SummonerInfoPage : Page
                             VerticalAlignment = VerticalAlignment.Center,
                             FontFamily = new FontFamily("/Assets/Fonts/spiegel.ttf#Spiegel"),
                             FontSize = 14,
-                            Text = participant.TotalMinionsKilled + $" ({csMin} CS/min)",
+                            Text = participant.TotalMinionsKilled + $" CS ({csMin})",
                             Margin = new Thickness(5)
                         };
                         
                         statsStackPanel.Children.Add(kdaNumberTextBlock);
                         statsStackPanel.Children.Add(csNumberTextBlock);
+                        
+                        Grid.SetColumn(statsStackPanel, 2);
                         matchStackPanel.Children.Add(statsStackPanel);
 
                         Grid itemGrid = new Grid();
+                        itemGrid.HorizontalAlignment = HorizontalAlignment.Center;
+                        itemGrid.VerticalAlignment = VerticalAlignment.Center;
+                        itemGrid.HorizontalAlignment = HorizontalAlignment.Center;
                         itemGrid.ColumnDefinitions.Add(new ColumnDefinition(){Width = new GridLength(25)});
                         itemGrid.ColumnDefinitions.Add(new ColumnDefinition(){Width = new GridLength(25)});
                         itemGrid.ColumnDefinitions.Add(new ColumnDefinition(){Width = new GridLength(25)});
@@ -484,15 +516,28 @@ public sealed partial class SummonerInfoPage : Page
                             }
                             i++;
                         }
+                        Grid.SetColumn(itemGrid, 3);
                         matchStackPanel.Children.Add(itemGrid);
                     }
-
                 Historic.Children.Add(matchStackPanel);
 
             }
         }
+    }
 
-        base.OnNavigatedTo(e);
+    private void GameModeTextBlockOnPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        ProtectedCursor = InputCursor.CreateFromCoreCursor(new CoreCursor(CoreCursorType.Arrow, 1));
+    }
+
+    private void GameModeTextBlockOnPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        ProtectedCursor = InputCursor.CreateFromCoreCursor(new CoreCursor(CoreCursorType.Hand, 1));
+    }
+
+    private void GameModeTextBlockOnPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        Debug.WriteLine("Pressed");
     }
 
     private void BackToMainMenu_Click(object sender, RoutedEventArgs e)

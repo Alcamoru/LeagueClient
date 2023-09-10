@@ -8,8 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="#0A3D62">
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    
         <StackPanel Orientation="Vertical">
 
             <Button
@@ -49,25 +48,28 @@
                         HorizontalAlignment="Center"
                         FontSize="24" />
                 </StackPanel>
-                <StackPanel
-                    Grid.Column="1"
+                <ScrollViewer 
+                    VerticalScrollBarVisibility="Visible"
+                    Height="500"
+                    Grid.Column="1">
+                    <StackPanel
 
-                    Orientation="Vertical"
-                    HorizontalAlignment="Center"
-                    x:Name="Historic">
-                    <TextBlock
-                        Margin="0 0 0 25"
-                        Text="Historique"
-                        FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
-                        FontWeight="Bold"
-                        CharacterSpacing="2"
+                        Orientation="Vertical"
                         HorizontalAlignment="Center"
-                        FontSize="24" />
-                </StackPanel>
+                        x:Name="Historic">
+                        <TextBlock
+                            Margin="0 0 0 25"
+                            Text="Historique"
+                            FontFamily="/Assets/Fonts/spiegel.ttf#Spiegel"
+                            FontWeight="Bold"
+                            CharacterSpacing="2"
+                            HorizontalAlignment="Center"
+                            FontSize="24" />
+                    </StackPanel>
+                </ScrollViewer>
 
 
             </Grid>
         </StackPanel>
-    </ScrollViewer>
 
 </Page>
