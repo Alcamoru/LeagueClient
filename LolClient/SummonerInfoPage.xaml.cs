@@ -13,6 +13,7 @@ using Microsoft.UI.Input;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -37,6 +38,8 @@ public sealed partial class SummonerInfoPage
     private List<Match> MatchList { get; set; }
 
     private RiotGamesApi RiotGamesApi { get; set; }
+    
+    private Summoner Summoner { get; set; }
 
     private List<Match> GetMatchList(string[] matchIds)
     {
@@ -63,16 +66,16 @@ public sealed partial class SummonerInfoPage
     }
 
 
-    private void DisplayTitle(Summoner summoner)
+    private void DisplayTitle()
     {
-        SummonerNameTextBlock.Text = "Statistiques de " + summoner!.Name;
+        SummonerNameTextBlock.Text = "Statistiques de " + Summoner!.Name;
     }
 
-    private void DisplayBestChampions(RiotGamesApi api, Summoner summoner)
+    private void DisplayBestChampions()
     {
-        var matchIdsByPuuid = api.MatchV5().GetMatchIdsByPUUID(RegionalRoute.EUROPE, summoner.Puuid, 30);
+        var matchIdsByPuuid = RiotGamesApi.MatchV5().GetMatchIdsByPUUID(RegionalRoute.EUROPE, Summoner.Puuid, 30);
         MatchList = GetMatchList(matchIdsByPuuid);
-        var topChamps = BestChampions(MatchList, summoner.Name);
+        var topChamps = BestChampions(MatchList, Summoner.Name);
         var champs = topChamps.ToList();
         var topChampsListSorted =
             new List<KeyValuePair<string, List<Match>>>();
@@ -114,7 +117,7 @@ public sealed partial class SummonerInfoPage
             Image champIcon = null;
 
             foreach (var participant in keyValuePair.Value[0].Info.Participants)
-                if (participant.SummonerName == summoner.Name)
+                if (participant.SummonerName == Summoner.Name)
                     champIcon = new Image
                     {
                         Source = new BitmapImage(new Uri($"http://ddragon.leagueoflegends.com/cdn/13.17.1/" +
@@ -131,7 +134,7 @@ public sealed partial class SummonerInfoPage
 
             foreach (var match in keyValuePair.Value)
             foreach (var participant in match.Info.Participants)
-                if (participant.SummonerName == summoner.Name)
+                if (participant.SummonerName == Summoner.Name)
                 {
                     killRatio += participant.Kills;
                     deathRatio += participant.Deaths;
@@ -222,7 +225,7 @@ public sealed partial class SummonerInfoPage
     }
 
     [SuppressMessage("ReSharper", "PossibleLossOfFraction")]
-    private void DisplayHistoric(Summoner summoner)
+    private void DisplayHistoric()
     {
         foreach (var match in MatchList)
         {
@@ -257,13 +260,13 @@ public sealed partial class SummonerInfoPage
 
             gameModeTextBlock.PointerExited += GameModeTextBlockOnPointerExited;
             gameModeTextBlock.PointerEntered += GameModeTextBlockOnPointerEntered;
-            gameModeTextBlock.PointerPressed += GameModeTextBlockOnPointerPressed;
+            gameModeTextBlock.PointerPressed += (o, args) => GameModeTextBlockOnPointerPressed(o, args, match: match);
 
             Grid.SetColumn(gameModeTextBlock, 0);
             matchStackPanel.Children.Add(gameModeTextBlock);
 
             foreach (var participant in match.Info.Participants)
-                if (participant.SummonerName == summoner!.Name)
+                if (participant.SummonerName == Summoner!.Name)
                 {
                     if (participant.Win) matchStackPanel.Background = new SolidColorBrush(Colors.Azure);
 
@@ -523,12 +526,12 @@ public sealed partial class SummonerInfoPage
         RiotGamesApi = (RiotGamesApi)parameters.ElementAt(0);
 
 
-        var summoner = RiotGamesApi.SummonerV4()
+        Summoner = RiotGamesApi.SummonerV4()
             .GetBySummonerName(PlatformRoute.EUW1, (string)parameters.ElementAt(1));
 
-        DisplayTitle(summoner);
-        DisplayBestChampions(RiotGamesApi, summoner);
-        DisplayHistoric(summoner);
+        DisplayTitle();
+        DisplayBestChampions();
+        DisplayHistoric();
     }
 
     private void GameModeTextBlockOnPointerExited(object sender, PointerRoutedEventArgs e)
@@ -541,13 +544,24 @@ public sealed partial class SummonerInfoPage
         ProtectedCursor = InputCursor.CreateFromCoreCursor(new CoreCursor(CoreCursorType.Hand, 1));
     }
 
-    private void GameModeTextBlockOnPointerPressed(object sender, PointerRoutedEventArgs e)
+    private void GameModeTextBlockOnPointerPressed(object sender, PointerRoutedEventArgs e, Match match)
     {
-        Debug.WriteLine("Pressed");
+        MatchInfoPopup.Width = ActualWidth;
+        MatchInfoPopup.Height = ActualHeight;
+        MatchInfoPopup.IsOpen = true;
+        
+        
     }
 
     private void BackToMainMenu_Click(object sender, RoutedEventArgs e)
     {
         Frame.Navigate(typeof(HomePage));
+    }
+
+    private void ClosePopup_OnClick(object sender, RoutedEventArgs e)
+    {
+        MatchInfoPopup.Width = 0;
+        MatchInfoPopup.Height = 0;
+        MatchInfoPopup.IsOpen = false;
     }
 }

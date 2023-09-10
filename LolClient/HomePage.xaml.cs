@@ -29,9 +29,11 @@ public sealed partial class HomePage : Page
     private void SendSummonerName_OnClick(object sender, RoutedEventArgs e)
     {
         var summonerNameEntry = SummonerNameEntry.Text;
-        var parameters = new List<object>();
-        parameters.Add(RiotApi);
-        parameters.Add(summonerNameEntry);
+        var parameters = new List<object>
+        {
+            RiotApi,
+            summonerNameEntry
+        };
         Frame.Navigate(typeof(SummonerInfoPage), parameters);
     }
 }

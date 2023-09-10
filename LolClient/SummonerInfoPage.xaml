@@ -10,7 +10,15 @@
     Background="#0A3D62">
 
     <StackPanel Orientation="Vertical">
-
+        
+        <Popup 
+               x:Name="MatchInfoPopup" IsOpen="False">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Test"></TextBlock>
+                <Button Content="Fermer" Click="ClosePopup_OnClick"></Button>
+            </StackPanel>
+        </Popup>
+        
         <Button
             Margin="20"
             Click="BackToMainMenu_Click"
